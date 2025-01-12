@@ -1,3 +1,5 @@
+const ClientError = require("../../exceptions/ClientError");
+
 class UsersHandler {
     constructor(service, validator) {
         this._service = service;
@@ -24,12 +26,14 @@ class UsersHandler {
             response.code(201);
             return response;
         } catch (error) {
-            const response = h.response({
-                status: 'fail',
-                message: error.message,
-            });
-            response.code(error.statusCode);
-            return response;
+            if (error instanceof ClientError) {
+                const response = h.response({
+                    status: 'fail',
+                    message: error.message,
+                });
+                response.code(error.statusCode);
+                return response;
+            }
         }
     }
 
@@ -48,12 +52,14 @@ class UsersHandler {
             response.code(200);
             return response;
         } catch(error) {
-            const response = h.response({
-                status: 'fail',
-                message: error.message,
-            });
-            response.code(error.statusCode);
-            return response;
+            if (error instanceof ClientError) {
+                const response = h.response({
+                    status: 'fail',
+                    message: error.message,
+                });
+                response.code(error.statusCode);
+                return response;
+            }
         }
     }
 }
