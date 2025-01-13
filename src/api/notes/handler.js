@@ -66,7 +66,7 @@ class NotesHandler {
         try {
             const {id} = request.params;
             const { id: credentialId } = request.auth.credentials;
-            await this._services.verifyNoteOwner(id, credentialId);
+            await this._services.verifyNoteAccess(id, credentialId);
             const note = await this._services.getNoteById(id);
             return {
                 status: 'success',
@@ -99,7 +99,7 @@ class NotesHandler {
             this._validator.validateNotePayload(request.payload);
             const {id} = request.params;
             const { id: credentialId } = request.auth.credentials;
-            await this._services.verifyNoteOwner(id, credentialId);
+            await this._services.verifyNoteAccess(id, credentialId);
             await this._services.editNoteById(id, request.payload);
 
             return {
