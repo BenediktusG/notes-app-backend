@@ -3,6 +3,7 @@ require('dotenv').config();
 const Hapi = require('@hapi/hapi');
 const process = require('process');
 const Jwt = require('@hapi/jwt');
+const ClientError = require('./exceptions/ClientError');
 
 // notes
 const notes = require('./api/notes');
@@ -20,10 +21,17 @@ const AuthenticationsService = require('./services/postgres/AuthenticationsServi
 const TokenManager = require('./tokenize/TokenManager');
 const AuthenticationsValidator = require('./validator/authentications');
 
-//collaborations
+// collaborations
 const collaborations = require('./api/collaborations');
 const CollaborationsServices = require('./services/postgres/CollaborationsService');
 const CollaborationsValidator = require('./validator/colllaborations');
+
+// Exports
+const _exports = require('./api/exports');
+// @ts-ignore
+const ProducerService = require('./services/rabbitmq/ProducerService');
+const ExportsValidator = require('./validator/exports');
+
 
 const init = async () => {
   const collaborationsService = new CollaborationsServices();
@@ -95,7 +103,43 @@ const init = async () => {
         validator: CollaborationsValidator,
       },
     },
+    {
+      plugin: _exports,
+      options: {
+        service: ProducerService,
+        validator: ExportsValidator,
+      },
+    },
   ]);
+
+  server.ext('onPreResponse', (request,h) => {
+    const { response } = request;
+
+    if (response instanceof Error) {
+        console.log(response);
+        if (response instanceof ClientError) {
+            const newResponse = h.response({
+                status: 'fail',
+                message: response.message,
+            });
+            newResponse.code(response.statusCode);
+            return newResponse;
+        }
+
+        if (!response.isServer) {
+            return h.continue;
+        }
+
+        const newResponse = h.response({
+            status: 'error',
+            message: 'terjadi kegagalan pada server kami',
+        });
+        newResponse.code(500);
+        return newResponse;
+    }
+
+    return h.continue;
+});
 
   await server.start();
   console.log(`Server berjalan pada ${server.info.uri}`);
