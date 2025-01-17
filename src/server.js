@@ -4,7 +4,6 @@ const Hapi = require('@hapi/hapi');
 const process = require('process');
 const Jwt = require('@hapi/jwt');
 const ClientError = require('./exceptions/ClientError');
-const path = require('path');
 const Inert = require('@hapi/inert')
 
 // notes
@@ -36,7 +35,7 @@ const ExportsValidator = require('./validator/exports');
 
 // Uploads
 const uploads = require('./api/uploads');
-const StorageService = require('./services/storage/StorageService');
+const StorageService = require('./services/S3/StorageService');
 const UploadsValidator = require('./validator/uploads');
 
 
@@ -45,8 +44,7 @@ const init = async () => {
   const notesService =  new NotesService(collaborationsService);
   const usersService = new UsersService();
   const authenticationsService = new AuthenticationsService();
-  // eslint-disable-next-line no-undef
-  const storageService = new StorageService(path.resolve(__dirname, 'api/uploads/file/images'));
+  const storageService = new StorageService();
   const server = Hapi.server({
     port: process.env.PORT,
     host: process.env.host,
@@ -132,7 +130,6 @@ const init = async () => {
 
   server.ext('onPreResponse', (request,h) => {
     const { response } = request;
-
     if (response instanceof Error) {
         if (response instanceof ClientError) {
             const newResponse = h.response({
