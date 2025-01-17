@@ -7,7 +7,6 @@ class ExportsHandler {
     }
 
     async postExportNotesHandler(request, h) {
-        console.log('abcd');
         this._validator.validateExportNotesPayload(request.payload);
 
         const message = {
